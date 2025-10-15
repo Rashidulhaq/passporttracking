@@ -338,6 +338,13 @@ function loadAll(){
   return raw ? JSON.parse(raw) : [];
 }
 function saveAll(list){
+   try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }catch(err){
+    console.error('Save failed', err);
+    alert('Save failed. সম্ভাব্য কারণ: storage limit ছাড়িয়েছে। বড় সাইজের ছবি কমপ্রেস করে চেষ্টা করুন।');
+    throw err;
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
@@ -452,13 +459,12 @@ document.getElementById('passportForm').addEventListener('submit', async functio
 
   const fileInput = document.getElementById('pic');
   if(fileInput.files && fileInput.files[0]){
-    picBase64 = await fileToBase64(fileInput.files[0]);
-  } else {
-    // if editing, keep existing picture
-    const existing = loadAll().find(x=>x.id===id);
-    if(existing) picBase64 = existing.picBase64 || '';
-  }
+  picBase64 = await imageFileToCompressedDataURL(fileInput.files[0], 1200, 1200, 0.8);
 
+} else {
+  const existing = loadAll().find(x=>x.id===id);
+  if(existing) picBase64 = existing.picBase64 || '';
+}
 
   //const entry = {id, name, passport_no, dob, nid, phone, handover, picBase64, createdAt: Date.now()};
 const entry = {
@@ -511,6 +517,48 @@ async function openForm(id){
   document.getElementById('status').value = rec.status || '';
 
 
+
+
+
+
+  //
+
+  
+// Resize + compress to JPEG dataURL (ডিফল্ট 1200px max side, 0.8 quality)
+async function imageFileToCompressedDataURL(file, maxW=1200, maxH=1200, quality=0.8){
+  const img = await fileToHTMLImage(file);
+  const {canvas, w, h} = drawToCanvas(img, maxW, maxH);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+function fileToHTMLImage(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=> resolve(img);
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function drawToCanvas(img, maxW, maxH){
+  let w = img.naturalWidth, h = img.naturalHeight;
+  const scale = Math.min(1, maxW / w, maxH / h); // ওই লিমিটের মধ্যে ফিট করো
+  w = Math.round(w * scale); h = Math.round(h * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  return {canvas, w, h};
+}
+
+
+///////////////
   // preview existing image (if any)
   const imgEl = document.getElementById('picPreview');
   if(rec.picBase64){
@@ -747,6 +795,7 @@ document.getElementById('imgModal').addEventListener('click', (e)=>{
 
 </body>
 </html>
+
 
 
 
