@@ -87,7 +87,7 @@ header img:hover {
     .list{margin-top:14px; font-size: 24px;}
     .row{display:flex;align-items:center;gap:15px;padding:25px;border-radius:8px;border:1px solid #eef2f8;margin-bottom:8px;background:#fff}
     .meta{flex:1}
-    .small{font-size:18px;color:var()}
+    .small{font-size:18px;color:var(--muted)}
     .controls{display:flex;gap:6px}
     /* .search-row{display:flex;gap:8px;margin-bottom:12px;align-items:center} */
     .search-row{display:flex;gap: 8px; margin-bottom:60px;align-items: center;width:100%; padding:20px;border-radius:8px;border:3px solid #ff2701; box-sizing:border-box }
@@ -416,14 +416,19 @@ document.getElementById('q').addEventListener('input', e=>{
 
 document.getElementById('pic').addEventListener('change', async (e)=>{
   const file = e.target.files && e.target.files[0];
-  const imgEl = document.getElementById('picPreview');
+  const imgEl = document.getElementById('picPreview'); // থাকতে-না-ও পারে
+
   if(file){
     const b64 = await fileToBase64(file);
-    imgEl.src = b64;
-    imgEl.style.display = 'block';
+    if(imgEl){           // 👈 null-safe
+      imgEl.src = b64;
+      imgEl.style.display = 'block';
+    }
   }else{
-    imgEl.src = '';
-    imgEl.style.display = 'none';
+    if(imgEl){           // 👈 null-safe
+      imgEl.src = '';
+      imgEl.style.display = 'none';
+    }
   }
 });
 
@@ -741,4 +746,5 @@ document.getElementById('imgModal').addEventListener('click', (e)=>{
 
 </body>
 </html>
+
 
